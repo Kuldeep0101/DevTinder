@@ -17,9 +17,16 @@ connectToDb()
 app.post("/signup", async (req, res) => {
   try {
     const data = req.body;
-    const user = new User(data);
-    const savedUser = await user.save();
-    res.status(200).json({ message: "User saved to DB", response: savedUser });
+    const emailId = data.emailId;
+    const checkForDupMail = await User.findOne({ emailId: emailId });
+
+    if (!checkForDupMail) {
+      const user = new User(data);
+      const savedUser = await user.save();
+      res.status(200).json({ message: "User saved to DB", response: user });
+    } else {
+      throw new Error("Duplicate email is not Allowed");
+    }
   } catch (error) {
     res.status(500).json({
       message: "error while saving User to DB",
@@ -74,15 +81,30 @@ app.get("/findbyid", async (req, res) => {
 });
 
 //Update the User
-app.patch("/user", async (req, res) => {
+app.patch("/user/:_id", async (req, res) => {
   try {
-    const id = req.body._id;
+    const id = req.params._id;
     const data = req.body;
-    console.log(data);
+    const skills = req.body?.skills;
+    const allowedUpdate = ["photoUrl", "gender", "age", "skills", "_id"];
+    const isUpdateAllowed = Object.keys(data).every((k) =>
+      allowedUpdate.includes(k)
+    );
+    if (req.body.skills.length > 10) {
+      throw new Error("Only 10 skill can be added");
+    }
+    if (!isUpdateAllowed) {
+      throw new Error("Update not allowed");
+    }
+    if (!data.emailId.includes("@")) {
+      throw new Error("Please Enter valid email id");
+    }
     const update = await User.findByIdAndUpdate(id, data, {
       returnDocument: "after",
+      runValidators: true,
     });
     res.status(200).json({ "user details updated": update });
+    console.log(data);
   } catch (error) {
     res.status(500).json({ "error While updating User Data": error.message });
   }
@@ -101,7 +123,6 @@ app.delete("/user", async (req, res) => {
 });
 
 //update user using email-id
-
 app.patch("/updatebyemail", async (req, res) => {
   try {
     const emailId = req.body.emailId;
