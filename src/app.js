@@ -1,29 +1,53 @@
 const express = require("express");
+const bcrypt = require("bcrypt");
 const { connectToDb } = require("./config/database");
 const { User } = require("./models/user");
 const app = express();
 app.use(express.json());
+const validateSignupData = require("./utils/validation");
+const validator = require("validator");
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
+const SecretKey = process.env.SecretKey;
+const cookieParser = require("cookie-parser");
+app.use(cookieParser);
 
 connectToDb()
   .then(() => {
     console.log(`Connected to DB`);
-    app.listen(8000, () => console.log("Server is running on Port 8000"));
+    app.listen(7000, () => console.log("Server is running on Port 8000"));
   })
-  .catch(() => {
-    console.log(`Error While connecting to db`);
+  .catch((err) => {
+    console.log(`Error While connecting to db`, err);
   });
 
 //POST Signup
 app.post("/signup", async (req, res) => {
   try {
-    const data = req.body;
-    const emailId = data.emailId;
-    const checkForDupMail = await User.findOne({ emailId: emailId });
+    console.log("object");
+    //Validation of Data
+    validateSignupData(req);
 
+    const { firstName, lastName, emailId, password } = req.body;
+
+    const checkForDupMail = await User.findOne({ emailId: emailId });
     if (!checkForDupMail) {
-      const user = new User(data);
-      const savedUser = await user.save();
-      res.status(200).json({ message: "User saved to DB", response: user });
+      //Encryption of Data
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      //Creating New Instance of the USER
+      const user = new User({
+        firstName,
+        lastName,
+        emailId,
+        password: hashedPassword,
+      });
+
+      const newInstance = await user.save();
+
+      res
+        .status(200)
+        .json({ message: "User saved to DB", response: newInstance });
     } else {
       throw new Error("Duplicate email is not Allowed");
     }
@@ -33,6 +57,38 @@ app.post("/signup", async (req, res) => {
       response: error.message,
     });
   }
+});
+
+//Login route
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+    if (!validator.isEmail(emailId)) {
+      throw new Error("Invalid Email ID");
+    }
+    const user = await User.findOne({ emailId });
+    const savedPassword = await user.password;
+
+    if (!user || !savedPassword) {
+      throw new Error("Invalid Username Or Password");
+    }
+    const compareHashedPassword = await bcrypt.compare(password, savedPassword);
+    if (!compareHashedPassword) {
+      throw new Error("Password did not match");
+    } else {
+      const generateJWT = jwt.sign({ emailId }, SecretKey, { expiresIn: "1d" });
+      res.cookie("Token", generateJWT);
+      res.status(200).send("Logged in successfully");
+    }
+  } catch (error) {
+    res.status(500).send({ "Error while logging in": error.message });
+  }
+});
+
+//Profile Route
+app.get("/profile", async (req, res) => {
+  try {
+  } catch (error) {}
 });
 
 //GET All Users
