@@ -10,7 +10,8 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const SecretKey = process.env.SecretKey;
 const cookieParser = require("cookie-parser");
-app.use(cookieParser);
+const { verifyRoute } = require("../middleware/auth");
+app.use(cookieParser());
 
 connectToDb()
   .then(() => {
@@ -24,7 +25,6 @@ connectToDb()
 //POST Signup
 app.post("/signup", async (req, res) => {
   try {
-    console.log("object");
     //Validation of Data
     validateSignupData(req);
 
@@ -76,7 +76,8 @@ app.post("/login", async (req, res) => {
     if (!compareHashedPassword) {
       throw new Error("Password did not match");
     } else {
-      const generateJWT = jwt.sign({ emailId }, SecretKey, { expiresIn: "1d" });
+      const _id = user._id;
+      const generateJWT = await jwt.sign({ _id }, SecretKey);
       res.cookie("Token", generateJWT);
       res.status(200).send("Logged in successfully");
     }
@@ -86,13 +87,18 @@ app.post("/login", async (req, res) => {
 });
 
 //Profile Route
-app.get("/profile", async (req, res) => {
+app.get("/profile", verifyRoute, async (req, res) => {
   try {
-  } catch (error) {}
+    const user = req.user;
+    res.status(200).send(`Hello ${user.firstName}  ${user.lastName}`);
+  } catch (error) {
+    res.status(500).send({ "internal server Error": error.message });
+  }
 });
 
 //GET All Users
-app.get("/feed", async (req, res) => {
+app.get("/feed", verifyRoute, async (req, res) => {
+  console.log("Feed called");
   try {
     const user = await User.find();
     if (user.length === 0) {

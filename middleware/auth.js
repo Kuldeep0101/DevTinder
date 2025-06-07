@@ -1,23 +1,36 @@
-const adminAuth = (req, res, next) => {
-  console.log("middleware started to run");
-  const token = "ABC";
-  const isAuthorized = token === "ABC";
-  if (!isAuthorized) {
-    return res.status(401).send("You are not authorized to access this route");
-  } else {
-    next();
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
+const SecretKey = process.env.SecretKey;
+const cookieParser = require("cookie-parser");
+const { User } = require("../src/models/user");
+
+const verifyRoute = async function (req, res, next) {
+  //Read the token from req.cookie
+  try {
+    const { Token } = req.cookies;
+
+    //validate the token
+    if (!Token || Token.length === 0) {
+      throw new Error("No Token Found, Please Login again");
+    }
+
+    const verifyToken = await jwt.verify(Token, SecretKey);
+    if (!verifyToken) {
+      throw new Error("No User ID Found, Please Login again");
+    }
+
+    //find the user
+    const userId = verifyToken._id;
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error("No user Found,  Please Login again");
+    } else {
+      req.user = user
+      next();
+    }
+  } catch (error) {
+    res.status(400).send({ "Internal Server Error": error.message });
   }
 };
 
-const userAuth = (req, res, next) => {
-  console.log(`user auth doing`);
-  const token = "ABC";
-  const isAuthorized = token === "ABC";
-  if (!isAuthorized) {
-    return res.status(401).send("You are not a user, get tf out here");
-  } else {
-    next();
-  }
-};
-
-module.exports = { adminAuth, userAuth };
+module.exports = { verifyRoute };
