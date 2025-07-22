@@ -16,6 +16,5 @@ const hashedPassword = async function (req) {
   console.log(user);
 };
 
-const compareHashedPassword = async function () {};
 
-module.exports = { hashedPassword, compareHashedPassword };
+module.exports = { hashedPassword,  };

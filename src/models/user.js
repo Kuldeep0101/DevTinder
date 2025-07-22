@@ -1,12 +1,15 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
+const SecretKey = process.env.SecretKey;
 
 const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
-      required: true,
+      // required: true,
       minLength: 4,
       maxLength: 25,
     },
@@ -19,19 +22,23 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
       unique: true,
-      validate(value) {
-        if (!validator.isEmail(value)) {
-          throw new Error("Please Enter Valid email Address:" + value);
-        }
+      validator: {
+        validate(value) {
+          if (!validator.isEmail(value)) {
+            throw new Error("Please Enter Valid email Address:" + value);
+          }
+        },
       },
     },
     password: {
       type: String,
       required: true,
-      validate(value) {
-        if (!validator.isStrongPassword(value)) {
-          throw new Error("Please Enter Strong Password");
-        }
+      validate: {
+        validator(value) {
+          if (!validator.isStrongPassword(value)) {
+            throw new Error("Please Enter Strong Password");
+          }
+        },
       },
     },
     age: {
@@ -41,6 +48,7 @@ const userSchema = new mongoose.Schema(
     gender: {
       type: String,
       enum: ["male", "female", "others"],
+      message: `{VALUE} is not Valid Gender Type`,
       // validate: {
       //   validator: function(value) {
       //     if (!["male", "female", "others"].includes(value)) {
@@ -71,11 +79,26 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre("save", async function (next) {
-  if (this.isModified === "password") {
+  if (this.isModified("password")) {
     this.password = await bcrypt.hash(this.password, 10);
   }
-  next();
+  next(); // tells mongoose to continue with saving
 });
+
+userSchema.methods.getJWT = async function () {
+  const user = this; //this refers to the user who has been find in login route (check login route)
+  const token = await jwt.sign({ _id: user._id }, SecretKey, {
+    expiresIn: "7d",
+  });
+  return token;
+};
+
+userSchema.methods.compareHashedPassword = async function (password) {
+  const user = this;
+  const savedPassword = user.password;
+  const compareHashedPassword = await bcrypt.compare(password, savedPassword);
+  return compareHashedPassword;
+};
 
 const User = mongoose.model("User", userSchema);
 module.exports = { User };
