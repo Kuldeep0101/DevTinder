@@ -22,6 +22,8 @@ const connectionRequestSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+connectionRequestSchema.index({ fromUserId: 1, toUserId: 1 });
+
 ///Check if User is sending the connection request to himself
 // connectionRequestSchema.pre("save", function (next) {
 //   const connectionRequest = this;

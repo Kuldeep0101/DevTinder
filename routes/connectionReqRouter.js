@@ -4,7 +4,7 @@ const connectionRequest = require("../src/models/connectionReqSchema");
 const { User } = require("../src/models/user");
 const requestRouter = express.Router();
 
-//Send Connection request
+//Send Connection request (Sender Side logic)
 requestRouter.post(
   "/request/send/:status/:toUserId",
   verifyRoute,
@@ -17,6 +17,7 @@ requestRouter.post(
       const toUser = await User.findById(toUserId);
       if (!toUser)
         return res.status(404).json({ message: "User Does not Exist" });
+
       const allowedStatus = ["ignored", "interested"];
 
       if (!allowedStatus.includes(status)) {
@@ -43,6 +44,7 @@ requestRouter.post(
           .status(400)
           .json({ message: "Connection Request Already sent" });
       }
+
       const connectionRequestInstance = new connectionRequest({
         fromUserId,
         toUserId,
@@ -52,7 +54,7 @@ requestRouter.post(
       const data = await connectionRequestInstance.save();
 
       res.status(200).json({
-        success: true,
+        message: `${fromUserId.firstName} sent ${status} request ${toUser.firstName}`,
         data: data,
       });
     } catch (error) {
@@ -65,13 +67,16 @@ requestRouter.post(
   }
 );
 
-//Review Connection Request
+//Review Connection Request (Receiver Side Logic)
 requestRouter.post(
   "/request/review/:status/:userId",
   verifyRoute,
   async (req, res) => {
     try {
-      const userId = req.params.userId;
+      const userId = req.user._id;
+      const status = req.params.status;
+      const allRequests = await connectionRequest.find({ status: status });
+      
     } catch (error) {}
   }
 );

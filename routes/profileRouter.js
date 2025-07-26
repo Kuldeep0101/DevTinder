@@ -10,7 +10,7 @@ const {
 } = require("../src/utils/validation");
 const profileRouter = express.Router();
 
-//Profile Route
+//View User Profile
 profileRouter.get("/profile/view", verifyRoute, async (req, res) => {
   try {
     const user = req.user;
@@ -58,7 +58,7 @@ profileRouter.patch("/profile/password", verifyRoute, async (req, res) => {
     );
     res.status(200).json({
       success: true,
-      message: `${req.user.firstName}, Your Password has been Updated Successfully`,
+      message: `${updatedUserPW.firstName}, Your Password has been Updated Successfully`,
     });
   } catch (error) {
     res

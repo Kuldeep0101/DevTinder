@@ -1,4 +1,4 @@
-const validateSignupData =  function (req) {
+const validateSignupData = function (req) {
   const { firstName, lastName, emailId, password } = req.body;
   if (!firstName || !lastName || !emailId || !password) {
     throw new Error("Please enter valid credentials");
@@ -45,7 +45,12 @@ const checkLName = (req) => {
 };
 
 const isValidPassword = (password) => {
-  if (!password) throw new Error("Password Field Can not be Empty");
+  if (!password || password === undefined ) {
+    console.log("code reached here");
+    throw new Error("Password Field Can not be Empty");
+  } else if (password.length < 5 || password.length > 20) {
+    throw new Error("Password Length should be between 5-20");
+  }
 };
 
 module.exports = {
