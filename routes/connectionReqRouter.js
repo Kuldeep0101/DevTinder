@@ -16,33 +16,41 @@ requestRouter.post(
 
       const toUser = await User.findById(toUserId);
       if (!toUser)
-        return res.status(404).json({ message: "User Does not Exist" });
+        return res.status(404).json({
+          message: "User Does not Exist",
+        });
 
       const allowedStatus = ["ignored", "interested"];
 
       if (!allowedStatus.includes(status)) {
-        return res
-          .status(400)
-          .json({ message: "Status either can be Ignored or Interested" });
+        return res.status(400).json({
+          message: "Status either can be Ignored or Interested",
+        });
       }
 
       if (toUserId.includes(fromUserId))
-        return res
-          .status(500)
-          .json({ message: "Can't send connection Request to Self" });
+        return res.status(500).json({
+          message: "Can't send connection Request to Self",
+        });
 
       //If there is Existing Connection request
       const checkExistingConnectionRequest = await connectionRequest.findOne({
         $or: [
-          { fromUserId, toUserId },
-          { fromUserId: toUserId, toUserId: fromUserId },
+          {
+            fromUserId,
+            toUserId,
+          },
+          {
+            fromUserId: toUserId,
+            toUserId: fromUserId,
+          },
         ],
       });
 
       if (checkExistingConnectionRequest) {
-        return res
-          .status(400)
-          .json({ message: "Connection Request Already sent" });
+        return res.status(400).json({
+          message: "Connection Request Already sent",
+        });
       }
 
       const connectionRequestInstance = new connectionRequest({
@@ -69,15 +77,41 @@ requestRouter.post(
 
 //Review Connection Request (Receiver Side Logic)
 requestRouter.post(
-  "/request/review/:status/:userId",
+  "/request/review/:status/:requestId",
   verifyRoute,
   async (req, res) => {
     try {
-      const userId = req.user._id;
-      const status = req.params.status;
-      const allRequests = await connectionRequest.find({ status: status });
-      
-    } catch (error) {}
+      const loggedInUser = req.user;
+      const { status, requestId } = req.params;
+
+      //Validate the status
+      const allowedStatus = ["accepted", "rejected"];
+      if (!allowedStatus.includes(status)) {
+        res.status(404).json("Status either can be accepted or rejected");
+      }
+
+      //Verify if userId Exist in DB
+      const connectionRequestDetails = await connectionRequest.findOne({
+        _id: requestId,
+        toUserId: loggedInUser._id,
+        status: "interested",
+      });
+
+      if (!connectionRequestDetails) {
+        return res.status(404).json({
+          message: "Connection Request not Found",
+        });
+      }
+
+      connectionRequest.status = status;
+      const data = await connectionRequestDetails.save();
+      res.json({ message: `Connection Request ${status}`, Data: data });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({
+        message: `Error While Finding The ${status} Request`,
+      });
+    }
   }
 );
 

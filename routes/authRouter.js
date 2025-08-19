@@ -52,6 +52,9 @@ authRouter.post("/login", async (req, res) => {
     if (!validator.isEmail(emailId)) {
       throw new Error("Invalid Email ID");
     }
+
+    
+
     const user = await User.findOne({ emailId });
     if (!user || user === null) {
       throw new Error("No User Found");
@@ -67,7 +70,7 @@ authRouter.post("/login", async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    res.status(500).send({ "Error while logging in": error.message});
+    res.status(500).send({ "Error while logging in": error.message });
   }
 });
 

@@ -9,7 +9,7 @@ const verifyRoute = async function (req, res, next) {
   try {
     // const { Token } = req.cookies;
     const Token =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2ODdiMjM2MDJiM2JkYzM1ZTQzODJhZjYiLCJpYXQiOjE3NTMwNzI2MjksImV4cCI6MTc1MzY3NzQyOX0.Ze7tzJ2Q7uoSlrBJ4UqW7jznDg9V2Ho-23To791YOrs";
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OGE0MmI4MzUwNjNlZGQ5Nzk4MjI5NWUiLCJpYXQiOjE3NTU1ODk3OTMsImV4cCI6MTc1NjE5NDU5M30.A_0cxYNM9qRfTqJYzBPr7B5MNrGCXBNqRb9fP98NMFg";
     //validate the token
     if (!Token || Token.length === 0) {
       throw new Error("No Token Found, Please Login again");
