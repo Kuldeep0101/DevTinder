@@ -11,10 +11,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       minLength: 4,
       maxLength: 25,
-      index : true
+      index: true,
+      required: true,
     },
     lastName: {
       type: String,
+      minLength: 4,
+      maxLength: 25,
     },
     emailId: {
       type: String,
@@ -22,13 +25,6 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
       unique: true,
-      validator: {
-        validate(value) {
-          if (!validator.isEmail(value)) {
-            throw new Error("Please Enter Valid email Address:" + value);
-          }
-        },
-      },
     },
     password: {
       type: String,
@@ -77,7 +73,6 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
 
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {

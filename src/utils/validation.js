@@ -1,13 +1,50 @@
-const validateSignupData = function (req) {
+const validator = require("validator");
+
+const validateSignupData = (req) => {
+  const errors = [];
   const { firstName, lastName, emailId, password } = req.body;
-  if (!firstName || !lastName || !emailId || !password) {
-    throw new Error("Please enter valid credentials");
-  } else if (firstName.length < 4 || firstName.length > 20) {
-    throw new Error("First name should be 4-20 charachters");
-  } else if (lastName.length < 4 || lastName.length > 20) {
-    throw new Error("Last name should be 4-20 charachters");
+
+  // 1️⃣ Check for required fields
+  if (!firstName || !emailId || !password) {
+    errors.push("Please enter mandatory fields");
   }
+
+  // 2️⃣ Validate firstName length
+  if (firstName && !validator.isLength(firstName, { min: 4, max: 20 })) {
+    errors.push("First Name must be 4-20 characters long");
+  }
+
+  // 3️⃣ Validate lastName length only if provided
+  if (lastName && lastName.trim() !== "") {
+    if (!validator.isLength(lastName.trim(), { min: 4, max: 20 })) {
+      errors.push("Last Name must be 4-20 characters long");
+    }
+  }
+
+  // 4️⃣ Validate email format
+  if (emailId && !validator.isEmail(emailId)) {
+    errors.push("Please enter a valid Email-id");
+  }
+
+  // 5️⃣ Validate password strength
+  if (
+    password &&
+    !validator.isStrongPassword(password, {
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1,
+    })
+  ) {
+    errors.push("Please enter a strong password");
+  }
+
+  return errors;
 };
+
+module.exports = validateSignupData;
+
 
 const validateProfileEditData = (req) => {
   const allowedEditFields = [
@@ -45,7 +82,7 @@ const checkLName = (req) => {
 };
 
 const isValidPassword = (password) => {
-  if (!password || password === undefined ) {
+  if (!password || password === undefined) {
     console.log("code reached here");
     throw new Error("Password Field Can not be Empty");
   } else if (password.length < 5 || password.length > 20) {
