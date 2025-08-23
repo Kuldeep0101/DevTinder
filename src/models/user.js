@@ -87,7 +87,7 @@ userSchema.pre("save", async function (next) {
 
 userSchema.methods.getJWT = async function () {
   const user = this; //this refers to the user who has been find in login route (check login route)
-  const token = await jwt.sign({ _id: user._id }, SecretKey, {
+  const token = jwt.sign({ _id: user._id }, SecretKey, {
     expiresIn: "7d",
   });
   return token;

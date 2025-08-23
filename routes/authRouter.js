@@ -1,13 +1,10 @@
 const express = require("express");
-const validator = require("validator");
 const { User } = require("../src/models/user");
-const { verifyRoute } = require("../middleware/verifyRoute");
 const bcrypt = require("bcrypt");
 const {
   validateSignupData,
   validateLoginData,
 } = require("../src/utils/validation.js");
-
 const authRouter = express.Router();
 
 //Signup Route
@@ -33,7 +30,7 @@ authRouter.post("/signup", async (req, res) => {
         firstName,
         lastName,
         emailId,
-        password // pre save hook hashes it and saved to DB
+        password, // pre save hook hashes it and saved to DB
       });
 
       const newInstance = await user.save();
@@ -52,9 +49,8 @@ authRouter.post("/signup", async (req, res) => {
   }
 });
 
-
 //login route
- authRouter.post("/login", async (req, res) => {
+authRouter.post("/login", async (req, res) => {
   try {
     const errors = validateLoginData(req);
     if (errors.length > 0) {
@@ -63,25 +59,28 @@ authRouter.post("/signup", async (req, res) => {
         .json({ message: "Login Validation Failed", errors });
     }
 
-    const { emailId, password } = req.body; 
+    const { emailId, password } = req.body;
 
     const user = await User.findOne({
       emailId,
     });
-    if (!user || user === null) {
-      throw new Error("No User Found");
+    if (!user) {
+      throw new Error(`User with Emailid ${emailId} not found`);
     }
 
     const storedPassword = user.password;
-    const isMatchedPassword = await bcrypt.compare(password, storedPassword); // Changed: compare plain with hash
+    const isMatchedPassword = await bcrypt.compare(password, storedPassword);
     if (isMatchedPassword) {
       const jwtToken = await user.getJWT();
       res.cookie("token", jwtToken, {
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        httpOnly: true, // prevents XSS
+        // secure: true, // HTTPS only
+        sameSite: "strict", // CSRF protection
+        maxAge: 604800000, // 7 days in ms
       }); //Token expires in 30 min
       res.status(200).send(`Hey There ${user.firstName}`);
     } else {
-      throw new Error("Invalid Credentials"); // Fixed typo "Credetials" to "Credentials"
+      throw new Error("Invalid Credentials");
     }
   } catch (error) {
     console.log(error);
@@ -91,21 +90,21 @@ authRouter.post("/signup", async (req, res) => {
   }
 });
 
-
 //Logout Route
-authRouter.post("/logout", async (req, res) => {
+authRouter.post("/logout", (req, res) => {
   try {
-    const token = req.cookies;
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(400).json({ message: "No logged-in user found" });
+    }
     res.clearCookie("token");
     res.status(200).json({
-      suceess: true,
+      success: true,
       message: "User logged out successfully",
     });
   } catch (error) {
     console.log(error);
-    res.status(500).send({
-      "Error While logging out": error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 });
 
