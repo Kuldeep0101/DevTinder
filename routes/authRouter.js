@@ -3,7 +3,10 @@ const validator = require("validator");
 const { User } = require("../src/models/user");
 const { verifyRoute } = require("../middleware/verifyRoute");
 const bcrypt = require("bcrypt");
-const { validateSignupData } = require("../src/utils/validation.js");
+const {
+  validateSignupData,
+  validateLoginData,
+} = require("../src/utils/validation.js");
 
 const authRouter = express.Router();
 
@@ -21,21 +24,16 @@ authRouter.post("/signup", async (req, res) => {
     }
 
     const { firstName, lastName, emailId, password } = req.body;
-    console.log(req.body);
     const checkForDupMail = await User.findOne({
       emailId: emailId,
     });
-    console.log(checkForDupMail);
-    if (!checkForDupMail || checkForDupMail === null) {
-      //Encryption of Data
-      const hashRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, hashRounds);
-      //Creating New Instance of the USER
+    if (!checkForDupMail || !checkForDupMail === null) {
+      // Creating New Instance of the USER
       const user = new User({
         firstName,
         lastName,
         emailId,
-        password: hashedPassword,
+        password // pre save hook hashes it and saved to DB
       });
 
       const newInstance = await user.save();
@@ -54,13 +52,18 @@ authRouter.post("/signup", async (req, res) => {
   }
 });
 
-//Login route
-authRouter.post("/login", async (req, res) => {
+
+//login route
+ authRouter.post("/login", async (req, res) => {
   try {
-    const { emailId, password } = req.body;
-    if (!validator.isEmail(emailId)) {
-      throw new Error("Invalid Email ID");
+    const errors = validateLoginData(req);
+    if (errors.length > 0) {
+      return res
+        .status(500)
+        .json({ message: "Login Validation Failed", errors });
     }
+
+    const { emailId, password } = req.body; 
 
     const user = await User.findOne({
       emailId,
@@ -68,16 +71,17 @@ authRouter.post("/login", async (req, res) => {
     if (!user || user === null) {
       throw new Error("No User Found");
     }
-    // const isValidPassword = await user.compareHashedPassword(password);
-    const isValidPassword = true;
-    if (isValidPassword) {
+
+    const storedPassword = user.password;
+    const isMatchedPassword = await bcrypt.compare(password, storedPassword); // Changed: compare plain with hash
+    if (isMatchedPassword) {
       const jwtToken = await user.getJWT();
       res.cookie("token", jwtToken, {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       }); //Token expires in 30 min
       res.status(200).send(`Hey There ${user.firstName}`);
     } else {
-      throw new Error("Invalid Credetials");
+      throw new Error("Invalid Credentials"); // Fixed typo "Credetials" to "Credentials"
     }
   } catch (error) {
     console.log(error);
@@ -86,6 +90,7 @@ authRouter.post("/login", async (req, res) => {
     });
   }
 });
+
 
 //Logout Route
 authRouter.post("/logout", async (req, res) => {

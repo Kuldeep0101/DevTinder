@@ -1,5 +1,7 @@
 const validator = require("validator");
 
+
+//Validate Signup Route
 const validateSignupData = (req) => {
   const errors = [];
   const { firstName, lastName, emailId, password } = req.body;
@@ -43,8 +45,22 @@ const validateSignupData = (req) => {
   return errors;
 };
 
-module.exports = validateSignupData;
+//Validate Login Route
+const validateLoginData = (req) => {
+  const { emailId, password } = req.body;
+  const errors = [];
+  if ((!emailId || !password || password.trim()  == "")) {
+    errors.push("Please Enter Email-id and Password");
+  }
 
+  if (emailId && !validator.isEmail(emailId.trim())) {
+    errors.push("Please Enter a valid Email-id");
+  }
+  if (password && !validator.isLength(password, { min: 8 })) {
+    errors.push("Please Enter Valid Password");
+  }
+  return errors;
+};
 
 const validateProfileEditData = (req) => {
   const allowedEditFields = [
@@ -81,19 +97,13 @@ const checkLName = (req) => {
   }
 };
 
-const isValidPassword = (password) => {
-  if (!password || password === undefined) {
-    console.log("code reached here");
-    throw new Error("Password Field Can not be Empty");
-  } else if (password.length < 5 || password.length > 20) {
-    throw new Error("Password Length should be between 5-20");
-  }
-};
+
 
 module.exports = {
   validateSignupData,
+  validateLoginData,
   validateProfileEditData,
   checkFName,
   checkLName,
-  isValidPassword,
+
 };

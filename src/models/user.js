@@ -74,12 +74,16 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+
+
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
     this.password = await bcrypt.hash(this.password, 10);
   }
-  next(); // tells mongoose to continue with saving
+  next();
 });
+
+
 
 userSchema.methods.getJWT = async function () {
   const user = this; //this refers to the user who has been find in login route (check login route)
