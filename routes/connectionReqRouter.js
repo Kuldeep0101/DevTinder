@@ -11,6 +11,7 @@ requestRouter.post(
   async (req, res) => {
     try {
       const fromUserId = req.user._id;
+      const fromUserIdName = await User.findById(fromUserId)
       const toUserId = req.params.toUserId;
       const status = req.params.status;
 
@@ -28,10 +29,13 @@ requestRouter.post(
         });
       }
 
-      if (toUserId.includes(fromUserId))
-        return res.status(500).json({
-          message: "Can't send connection Request to Self",
-        });
+      //already implimented in Schema level
+
+      // if (toUserId === fromUserId.toString()){
+      //   return res.status(400).json({
+      //     message: "Can't send connection Request to Self",
+      //   });
+      // };
 
       //If there is Existing Connection request
       const checkExistingConnectionRequest = await connectionRequest.findOne({
@@ -62,7 +66,7 @@ requestRouter.post(
       const data = await connectionRequestInstance.save();
 
       res.status(200).json({
-        message: `${fromUserId.firstName} sent ${status} request ${toUser.firstName}`,
+        message: `${fromUserIdName.firstName} sent ${status} request to ${toUser.firstName}`,
         data: data,
       });
     } catch (error) {
@@ -103,7 +107,7 @@ requestRouter.post(
         });
       }
 
-      connectionRequest.status = status;
+      connectionRequestDetails.status = status;
       const data = await connectionRequestDetails.save();
       res.json({ message: `Connection Request ${status}`, Data: data });
     } catch (error) {
