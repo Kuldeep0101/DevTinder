@@ -66,15 +66,15 @@ const userSchema = new mongoose.Schema(
     about: {
       type: String,
       default: "This is the defaut About of the User",
+      maxLength: 50,
     },
     skills: {
       type: [String],
+      maxLength: 50,
     },
   },
   { timestamps: true }
 );
-
-
 
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
@@ -82,8 +82,6 @@ userSchema.pre("save", async function (next) {
   }
   next();
 });
-
-
 
 userSchema.methods.getJWT = async function () {
   const user = this; //this refers to the user who has been find in login route (check login route)

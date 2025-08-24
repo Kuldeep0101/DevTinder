@@ -1,6 +1,5 @@
 const validator = require("validator");
 
-
 //Validate Signup Route
 const validateSignupData = (req) => {
   const errors = [];
@@ -49,7 +48,7 @@ const validateSignupData = (req) => {
 const validateLoginData = (req) => {
   const { emailId, password } = req.body;
   const errors = [];
-  if ((!emailId || !password || password.trim()  == "")) {
+  if (!emailId || !password || password.trim() == "") {
     errors.push("Please Enter Email-id and Password");
   }
 
@@ -60,6 +59,33 @@ const validateLoginData = (req) => {
     errors.push("Please Enter Valid Password");
   }
   return errors;
+};
+
+//For Profile Edit Route
+
+const checkUserInput = (req) => {
+  const { firstName, lastName } = req.body;
+
+  if (firstName === undefined) {
+    return;
+  }
+  if (
+    firstName.trim().length < 4 ||
+    firstName.trim.length > 20 ||
+    firstName.trim() === ""
+  ) {
+    throw new Error("First Name must be 4-20 characters.");
+  }
+  if (lastName === undefined) {
+    return;
+  }
+  if (
+    lastName.trim().length < 4 ||
+    lastName.trim.length > 20 ||
+    lastName.trim() === ""
+  ) {
+    throw new Error("Last Name must be 4-20 characters.");
+  }
 };
 
 const validateProfileEditData = (req) => {
@@ -73,37 +99,39 @@ const validateProfileEditData = (req) => {
     "skills",
   ];
 
+  const allowedSet = new Set(allowedEditFields);
   const isEditAllowed = Object.keys(req.body).every((field) =>
-    allowedEditFields.includes(field)
+    allowedSet.has(field)
   );
   return isEditAllowed;
 };
 
-const checkFName = (req) => {
-  const fName = req.body.firstName;
-  if (fName === undefined) return;
+const isValidPasswordData = (req) => {
+  const { password } = req.body;
+  if (!password) {
+    throw new Error("Password Field is Missing");
+  }
+  if (Object.keys(req.body).length !== 1) {
+    throw new Error("Only password field is allowed");
+  }
 
-  if (fName.length < 4 || fName.length > 20) {
-    throw new Error("First Name should be 4-20 charachters");
+  if (
+    !validator.isStrongPassword(password, {
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1,
+    })
+  ) {
+    throw new Error("Please Enter a Strong Password");
   }
 };
-
-const checkLName = (req) => {
-  const lName = req.body.lastName;
-  if (lName === undefined) return;
-
-  if (lName.length < 4 || lName.length > 20) {
-    throw new Error("Last Name should be 4-20 charachters");
-  }
-};
-
-
 
 module.exports = {
   validateSignupData,
   validateLoginData,
+  checkUserInput,
   validateProfileEditData,
-  checkFName,
-  checkLName,
-
+  isValidPasswordData,
 };
