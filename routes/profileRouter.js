@@ -52,7 +52,7 @@ profileRouter.patch("/profile/edit", verifyRoute, async (req, res) => {
 profileRouter.patch("/profile/password", verifyRoute, async (req, res) => {
   try {
     isValidPasswordData(req);
-    const password = req.body.password;
+    const {password} = req.body;
     const newHashedPassword = await bcrypt.hash(password, 10);
     const updatedUserPW = await User.findByIdAndUpdate(
       req.user._id,
@@ -64,7 +64,7 @@ profileRouter.patch("/profile/password", verifyRoute, async (req, res) => {
       }
     );
     res.status(200).json({
-      message: `${updatedUserPW.firstName}, Your Password has been Updated Successfully to- ${password}`,
+      message: `${updatedUserPW.firstName}, Your Password has been Updated Successfully `,
     });
   } catch (error) {
     res.status(500).json({

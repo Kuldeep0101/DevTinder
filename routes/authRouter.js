@@ -92,6 +92,7 @@ authRouter.post("/login", async (req, res) => {
 //Logout Route
 authRouter.post("/logout", (req, res) => {
   try {
+  
     const token = req.cookies.token;
     if (!token) {
       return res.status(400).json({ message: "No logged-in user found" });
