@@ -1,20 +1,26 @@
 const express = require("express");
-const bcrypt = require("bcrypt");
-const connectToDb  = require("./config/database");
+const cors = require("cors");
+const connectToDb = require("./config/database");
 const app = express();
-require('dotenv').config()
+require("dotenv").config();
 
 const cookieParser = require("cookie-parser");
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 const authRouter = require("../routes/authRouter");
 const connectionRequestRouter = require("../routes/connectionReqRouter");
 const profileRouter = require("../routes/profileRouter");
-const userRouter= require('../routes/userRouter')
+const userRouter = require("../routes/userRouter");
 
-const PORT = process.env.PORT
+const PORT = process.env.PORT;
 
 connectToDb()
   .then(() => {
@@ -28,4 +34,4 @@ connectToDb()
 app.use("/", authRouter);
 app.use("/", connectionRequestRouter);
 app.use("/", profileRouter);
-app.use("/", userRouter)
+app.use("/", userRouter);

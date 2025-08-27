@@ -77,7 +77,7 @@ authRouter.post("/login", async (req, res) => {
         sameSite: "strict", // CSRF protection
         maxAge: 604800000, // 7 days in ms
       }); //Token expires in 30 min
-      res.status(200).send(`Hey There ${userFoundInDB.firstName}`);
+      res.status(200).send(`${userFoundInDB}`);
     } else {
       throw new Error("Invalid Credentials");
     }
