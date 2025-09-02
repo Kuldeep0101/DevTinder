@@ -15,7 +15,7 @@ const verifyRoute = async function (req, res, next) {
   try {
     const { token } = req.cookies;
     if (!token || token.length === 0) {
-      throw new Error("No Token Found, Please Login again");
+      return res.status(401).send("Please Login")
     }
 
     const verifyToken = await jwt.verify(token, SecretKey);

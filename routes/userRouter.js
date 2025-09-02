@@ -131,7 +131,7 @@ userRouter.get("/user/feed", verifyRoute, async (req, res) => {
           },
         ],
       })
-        .select(USER_SAFE_DATA)
+        // .select(USER_SAFE_DATA)
         .skip(skip)
         .limit(limit);
 

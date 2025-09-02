@@ -5,7 +5,6 @@ const {
   validateSignupData,
   validateLoginData,
 } = require("../src/utils/validation.js");
-const { updateSearchIndex } = require("../src/models/connectionReqSchema.js");
 const authRouter = express.Router();
 
 //Signup Route
@@ -68,7 +67,10 @@ authRouter.post("/login", async (req, res) => {
     if (!userFoundInDB) {
       throw new Error(`User with Emailid ${emailId} not found`);
     }
-    const isMatchedPassword = await userFoundInDB.compareHashedPassword; //Using method which was defined in Schema to check hashed password, we call it on the userFoundInDB we found in DB
+    const isMatchedPassword = await bcrypt.compare(password, userFoundInDB.password) 
+    
+    //Using method which was defined in Schema to check hashed password, we call it on the userFoundInDB we found in DB
+    
     if (isMatchedPassword) {
       const jwtToken = await userFoundInDB.getJWT();
       res.cookie("token", jwtToken, {
@@ -77,7 +79,7 @@ authRouter.post("/login", async (req, res) => {
         sameSite: "strict", // CSRF protection
         maxAge: 604800000, // 7 days in ms
       }); //Token expires in 30 min
-      res.status(200).send(`${userFoundInDB}`);
+      res.status(200).send(userFoundInDB);
     } else {
       throw new Error("Invalid Credentials");
     }
@@ -88,7 +90,7 @@ authRouter.post("/login", async (req, res) => {
     });
   }
 });
-
+ 
 //Logout Route
 authRouter.post("/logout", (req, res) => {
   try {

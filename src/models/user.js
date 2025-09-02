@@ -16,8 +16,8 @@ const userSchema = new mongoose.Schema(
     },
     lastName: {
       type: String,
-      minLength: 4,
-      maxLength: 25,
+      // minLength: 4,
+      // maxLength: 25,
     },
     emailId: {
       type: String,
@@ -91,12 +91,15 @@ userSchema.methods.getJWT = async function () {
   return token;
 };
 
-userSchema.methods.compareHashedPassword = async function (password) {
-  const user = this;
-  const savedPassword = user.password;
-  const compareHashedPassword = await bcrypt.compare(password, savedPassword);
-  return compareHashedPassword;
-};
+// REFACTOR CODE BELOW  
+
+// userSchema.methods.compareHashedPassword = async function (req) {
+//   const user = this;
+//   const savedPassword = user.password;
+//   console.log(password)
+//   const compareHashedPassword = await bcrypt.compare(password, savedPassword);
+//   return compareHashedPassword;
+// };
 
 const User = mongoose.model("User", userSchema);
 module.exports = { User };

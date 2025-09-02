@@ -13,10 +13,10 @@ const profileRouter = express.Router();
 profileRouter.get("/profile/view", verifyRoute, async (req, res) => {
   try {
     const user = req.user;
-    res.status(200).send(`Hello ${user.firstName}  ${user.lastName}`);
+    res.status(200).send(user);
   } catch (error) {
     console.log(error);
-    res.status(500).send({
+    res.status(400).send({
       "internal server Error": error.message,
     });
   }
@@ -24,7 +24,6 @@ profileRouter.get("/profile/view", verifyRoute, async (req, res) => {
 
 //Edit Profile (Can not Update Email and Password)
 profileRouter.patch("/profile/edit", verifyRoute, async (req, res) => {
-  console.log(req.body);
   try {
     checkUserInput(req);
 
@@ -34,17 +33,19 @@ profileRouter.patch("/profile/edit", verifyRoute, async (req, res) => {
 
     const updatedData = req.body;
     const userId = req.user._id;
-    const update = await User.findByIdAndUpdate(userId, updatedData, {
+    const data = await User.findByIdAndUpdate(userId, updatedData, {
       new: true,
+      runValidators: true,
     });
-    res.status(200).send({
-      "User Data Updated": update,
+    // console.log(data);
+
+    res.status(200).json({
+      messgae: `Profile updated successfully`,
+      data: data,
     });
   } catch (error) {
     console.log(error);
-    res.status(500).send({
-      "Error while updating the user data": error.message,
-    });
+    res.status(500).send(`${error.message}`);
   }
 });
 
@@ -52,7 +53,7 @@ profileRouter.patch("/profile/edit", verifyRoute, async (req, res) => {
 profileRouter.patch("/profile/password", verifyRoute, async (req, res) => {
   try {
     isValidPasswordData(req);
-    const {password} = req.body;
+    const { password } = req.body;
     const newHashedPassword = await bcrypt.hash(password, 10);
     const updatedUserPW = await User.findByIdAndUpdate(
       req.user._id,
@@ -61,6 +62,7 @@ profileRouter.patch("/profile/password", verifyRoute, async (req, res) => {
       },
       {
         new: true,
+        runValidators: true,
       }
     );
     res.status(200).json({
