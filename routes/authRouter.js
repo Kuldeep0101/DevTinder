@@ -78,8 +78,8 @@ authRouter.post("/login", async (req, res) => {
       const jwtToken = await userFoundInDB.getJWT();
       res.cookie("token", jwtToken, {
         httpOnly: true, // prevents XSS
-        // secure: true, // HTTPS only
-        sameSite: "strict", // CSRF protection
+        secure: true, // HTTPS only
+        sameSite: "None", // CSRF protection
         maxAge: 604800000, // 7 days in ms
       }); //Token expires in 30 min
       res.status(200).send(userFoundInDB);
