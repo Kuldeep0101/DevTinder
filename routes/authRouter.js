@@ -20,7 +20,7 @@ authRouter.post("/signup", async (req, res) => {
       });
     }
 
-    const { firstName, lastName, emailId, password } = req.body;
+    const { firstName, lastName, emailId, password, photoUrl, about, skills } = req.body;
     const checkForDupMail = await User.findOne({
       emailId: emailId,
     });
@@ -31,6 +31,9 @@ authRouter.post("/signup", async (req, res) => {
         lastName,
         emailId,
         password, // pre save hook hashes it and saved to DB
+        photoUrl,
+        about,
+        skills,
       });
 
       const newInstance = await user.save();

@@ -16,7 +16,7 @@ userRouter.get("/user/request/received", verifyRoute, async (req, res) => {
         toUserId: loggedInUser._id,
         status: "interested",
       })
-      .populate("fromUserId", USER_SAFE_DATA);
+      .populate("fromUserId");
 
     if (!findPendingReq || findPendingReq.length === 0) {
       return res.status(400).json({

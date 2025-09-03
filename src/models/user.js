@@ -65,7 +65,7 @@ const userSchema = new mongoose.Schema(
     },
     about: {
       type: String,
-      default: "This is the defaut About of the User",
+      // default: "This is the defaut About of the User",
       maxLength: 50,
     },
     skills: {
