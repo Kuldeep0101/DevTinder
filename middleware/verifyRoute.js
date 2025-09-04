@@ -1,19 +1,19 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
-
 const app = express(); // This is the 'app'
 app.use(cookieParser()); // Using middleware on the app instance
-
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const SecretKey = process.env.SecretKey;
-
 const { User } = require("../src/models/user");
+
+
 
 const verifyRoute = async function (req, res, next) {
   //Read the token from req.cookie
   try {
     const { token } = req.cookies;
+    console.log(token)
     if (!token || token.length === 0) {
       return res.status(401).send("Please Login")
     }

@@ -1,11 +1,15 @@
 const express = require("express");
 const { User } = require("../src/models/user");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const {
   validateSignupData,
   validateLoginData,
 } = require("../src/utils/validation.js");
 const authRouter = express.Router();
+
+require("dotenv").config();
+const SecretKey = process.env.SecretKey;
 
 //Signup Route
 authRouter.post("/signup", async (req, res) => {
@@ -20,7 +24,8 @@ authRouter.post("/signup", async (req, res) => {
       });
     }
 
-    const { firstName, lastName, emailId, password, photoUrl, about, skills } = req.body;
+    const { firstName, lastName, emailId, password, photoUrl, about, skills } =
+      req.body;
     const checkForDupMail = await User.findOne({
       emailId: emailId,
     });
@@ -37,9 +42,20 @@ authRouter.post("/signup", async (req, res) => {
       });
 
       const newInstance = await user.save();
+
+      const jwtToken = jwt.sign({ _id: newInstance._id }, SecretKey, {
+        expiresIn: "7d",
+      });
+      console.log(jwtToken);
+      res.cookie("token", jwtToken, {
+        httpOnly: true, // prevents XSS
+        secure: true, // HTTPS only
+        sameSite: "None",
+        maxAge: 604800000, ///Token expires in 7 days in ms
+      });
       res.status(200).json({
         message: "User saved to DB",
-        response: newInstance,
+        data: newInstance,
       });
     } else {
       throw new Error("Duplicate email is not Allowed");
@@ -70,19 +86,24 @@ authRouter.post("/login", async (req, res) => {
     if (!userFoundInDB) {
       throw new Error(`User with Emailid ${emailId} not found`);
     }
-    const isMatchedPassword = await bcrypt.compare(password, userFoundInDB.password) 
-    
+    const isMatchedPassword = await bcrypt.compare(
+      password,
+      userFoundInDB.password
+    );
+
     //Using method which was defined in Schema to check hashed password, we call it on the userFoundInDB we found in DB
-    
+
     if (isMatchedPassword) {
-      const jwtToken = await userFoundInDB.getJWT();
+      const jwtToken = await jwt.sign({_id:userFoundInDB._id}, SecretKey, {
+        expiresIn: "7d",
+      });
       res.cookie("token", jwtToken, {
         httpOnly: true, // prevents XSS
-        secure: true, // HTTPS only
-        sameSite: "None", // CSRF protection
-        maxAge: 604800000, // 7 days in ms
-      }); //Token expires in 30 min
-      res.status(200).send(userFoundInDB);
+        secure: true, // HTTPS only (false if testing API on postman, true if using with frontend(vite))
+        sameSite: "None",
+        maxAge: 604800000, ///Token expires in 7 days in ms
+      });
+      res.status(200).json({ data: userFoundInDB });
     } else {
       throw new Error("Invalid Credentials");
     }
@@ -93,11 +114,10 @@ authRouter.post("/login", async (req, res) => {
     });
   }
 });
- 
+
 //Logout Route
 authRouter.post("/logout", (req, res) => {
   try {
-  
     const token = req.cookies.token;
     if (!token) {
       return res.status(400).json({ message: "No logged-in user found" });
